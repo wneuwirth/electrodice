@@ -37,6 +37,8 @@ List of songs to choose from
 //char *song = "A-Team:d=8,o=5,b=125:4d#6,a#,2d#6,16p,g#,4a#,4d#.,p,16g,16a#,d#6,a#,f6,2d#6,16p,c#.6,16c6,16a#,g#.,2a#";
 //char *song = "MissionImp:d=16,o=6,b=95:32d,32d#,32d,32d#,32d,32d#,32d,32d#,32d,32d,32d#,32e,32f,32f#,32g,g,8p,g,8p,a#,p,c7,p,g,8p,g,8p,f,p,f#,p,g,8p,g,8p,a#,p,c7,p,g,8p,g,8p,f,p,f#,p,a#,g,2d,32p,a#,g,2c#,32p,a#,g,2c,a#5,8c,2p,32p,a#5,g5,2f#,32p,a#5,g5,2f,32p,a#5,g5,2e,d#,8d";
 //char *song = "MacGyver:d=4,o=6,b=150:8b4,8e5,8a5,8b5,a5,8e5,8b4,8p,8e5,8a5,8b5,8a5,8e5,b4,8p,8e5,8a5,8b5,a5,8e5,8b4,8p,8a5,8d,8c,8d,8c,8b5,8a5,8b4,8e5,8a5,8b5,a5,8e5,8b4,8p,8e5,8a5,8b5,8a5,8e5,b4,8p,8e5,8a5,8b5,a5,8e5,8b4,8p,8a5,8d,8c,8d,8c,8b5,8a5,b5,8p,2b5,8p,b5,8p,a5,d.,b5,8p,2b5,8p,8b5,8p,2a5,p,8c,8c,8c,8c,8c,8c,2b5,16p,8f#5,8a5,8p,2g5,8p,8c,8c,8p,b5,8a5,8b5,8a5,8g5,8p,e,2a5,16p,8c,8c,8p,2b5,8p,8f#5,8a5,8p,2g5,8p,8c,8c,8p,4b5,8a5,8b5,8a5,8g5,8p,4e,2a5,2b5,32p,8c,8b5,8a5,c,8b5,8a5,8d,8c,8b5,d,8c,8b5,e,8d,8e,f#,b5,g,8p,f#,f,b5,8g,8e,8b5,8f#,8d,8a5,8e,8c,8g5,8d,8b5,8g5,8c,8e5,8b5,8d5,8c,8b5,8a5,8g5,a#5,a5,8g,8g5,8d,8g5,8d#,8d#5,8a#5,8a5,8g5,8g4,8d5,8g4,8d#5,8g4,8a#4,8a4,8g4,8g4,8g4,8g4,8g4,8g4,8g4";
+//char *song = "dualingbanjos:d=4,o=5,b=200:8c#,8d,e,c#,d,b4,c#,d#4,b4,p,16c#6,16p,16d6,16p,8e6,8p,8c#6,8p,8d6,8p,8b,8p,8c#6,8p,8a,8p,b,p,a4,a4,b4,c#,d#4,c#,b4,p,8a,8p,8a,8p,8b,8p,8c#6,8p,8a,8p,8c#6,8p,8b";
+//char *song = "Popeye:d=4,o=5,b=140:16g.,16f.,16g.,16p,32p,16c.,16p,32p,16c.,16p,32p,16e.,16d.,16c.,16d.,16e.,16f.,g,8p,16a,16f,16a,16c6,16b,16a,16g,16a,16g,8e,16g,16g,16g,16g,8a,16b,32c6,32b,32c6,32b,32c6,32b,8c6";
 
       
     To play song:
@@ -120,7 +122,10 @@ int led5 = 10;
 int led6 = 9;
 
 int button1 = 12;
-int buttonState = 0;
+int buttonState;             // the current reading from the input pin
+long debounceDelay = 300;    // the debounce time; increase if the output flickers
+
+// Potentiometer
 int pot = A1;
 
 int diceMode = 1;
@@ -129,7 +134,7 @@ int diceResult = 0;
 byte isCrit = 0;
 byte isFumble = 0;
 
-char *song_crit = "StarWars:d=4,o=5,b=45:32p,32f#,32f#,32f#,8b.,8f#.6,32e6,32d#6,32c#6,8b.6,16f#.6,32e6,32d#6,32c#6,8b.6,16f#.6,32e6,32d#6,32e6,8c#.6,32f#,32f#,32f#,8b.,8f#.6,32e6,32d#6,32c#6,8b.6,16f#.6,32e6,32d#6,32c#6,8b.6,16f#.6,32e6,32d#6,32e6,8c#6";
+char *song_crit = "The Force:d=4,o=5,b=180:d,g,g,g,a,a,8a#,8c6,8a#,a#,a#,d,8d,8p,d,g,g,a,a#,d,8a#,8g,8d6,c6,c6,c6,c6";
 char *song_fumble = "Imperial March:d=4,o=5,b=180:a,8p,a,8p,a,8p,8f,8c6,a,8p,8f,8c6,a,2p,e6,8p,e6,8p,e6,8p,f6,8c#6,g#,8p,8f,8c6,a";
 
 
@@ -517,35 +522,41 @@ return diceTotal;
 
 void loop(){
   
-  setMode();  // Set's the dice mode from 1 - 6
+  // Set's the dice mode from 1 - 6
+  setMode();  
   
+  // Read the button
   buttonState = digitalRead(button1);
   
   if (buttonState == HIGH) {
-  
-  Serial.println("Button pressed");
+
+    Serial.println("Button pressed");
     
-  diceResult = rollDice();  // Roll the dice
-  displayNum(diceResult); // Display the result
+    // Roll the dice
+    diceResult = rollDice();  // Roll the dice
   
-  if (isCrit == 1) {
+    // Display the result
+    displayNum(diceResult); // Display the result
+  
+    // If it's a crit play a little tune
+    if (isCrit == 1) {
   
     play_rtttl(song_crit);
     delay(100);
   
-  }
+    }
   
-  if (isFumble == 1) {
+    // If it's a fumble, play a baaaad tune
+    if (isFumble == 1) {
   
     play_rtttl(song_fumble);
     delay(100);
   
+    }
+  
+  // Put in a debounce delay
+  delay(debounceDelay);
   }
   
-  }
-  
-  displayNum(diceResult); // Display the result
-
-  delay(1000);
   
 }
